@@ -1,0 +1,34 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<!--
+`bug-reporter`
+Polymer 1.x form for bug reporting in SPA&#39;s
+
+@demo demo/index.html
+-->
+
+<dom-module id="bug-reporter">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <h2>Hello [[prop1]]!</h2>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'bug-reporter',
+
+      properties: {
+        prop1: {
+          type: String,
+          value: 'bug-reporter',
+        },
+      },
+
+    });
+  </script>
+</dom-module>
