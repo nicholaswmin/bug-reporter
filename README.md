@@ -17,7 +17,9 @@ Captures:
 
 ## Installation
 
-[WIP]
+```bash
+$ bower install --save bug-reporter
+```
 
 ## Basic Usage
 
