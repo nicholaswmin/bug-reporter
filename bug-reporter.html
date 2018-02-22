@@ -3,6 +3,7 @@
 <link rel="import" href="../iron-ajax/iron-ajax.html">
 <link rel="import" href="../iron-icons/iron-icons.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-input/paper-textarea.html">
 <link rel="import" href="../paper-button/paper-button.html">
@@ -25,19 +26,6 @@ Polymer 1.x form for bug reporting in SPA&#39;s
         font-family: sans-serif;
       }
 
-      .content {
-        padding: 1em;
-        padding-top: 0;
-      }
-
-      h2 {
-        background: #009688;
-        color: #FFF;
-        padding: 0.7em 0.4em;
-        margin-top: 0;
-        font-weight: lighter;
-      }
-
       paper-input {
         margin: 0.5em 0;
       }
@@ -53,11 +41,11 @@ Polymer 1.x form for bug reporting in SPA&#39;s
 
       .help-info {
         color: #999;
-        padding: 1em;
       }
 
       .error-container {
-        height: 20px;
+        height: 1.5em;
+        margin: 2em 0;
         color: #D50000;
         visibility: hidden;
       }
@@ -66,13 +54,12 @@ Polymer 1.x form for bug reporting in SPA&#39;s
         visibility: visible;
       }
 
-      .actions {
-        padding: 1em 0;
-        text-align: right;
-      }
-
       paper-button {
         text-transform: none;
+        color: #999;
+      }
+
+      paper-button.primary {
         color: #009688;
       }
     </style>
@@ -87,16 +74,17 @@ Polymer 1.x form for bug reporting in SPA&#39;s
       debounce-duration="300">
     </iron-ajax>
 
-    <h2> Report a bug </h2>
+    <paper-dialog id="modal">
+      <h2>Report a bug</h2>
 
-    <div class="content">
       <paper-input
         label="Name"
         value="{{data.name}}"
         disabled="[[loading]]"
         error-message="Required"
         auto-validate
-        required>
+        required
+        stop-keyboard-event-propagation>
       </paper-input>
 
       <paper-input
@@ -106,7 +94,8 @@ Polymer 1.x form for bug reporting in SPA&#39;s
         disabled="[[loading]]"
         error-message="Required"
         auto-validate
-        required>
+        required
+        stop-keyboard-event-propagation>
       </paper-input>
 
       <paper-textarea
@@ -115,7 +104,10 @@ Polymer 1.x form for bug reporting in SPA&#39;s
         disabled="[[loading]]"
         error-message="Required"
         auto-validate
-        required>
+        required
+        max-rows="10"
+        on-value-changed="_repositionDialog"
+        stop-keyboard-event-propagation>
       </paper-textarea>
 
       <p class="help-info">
@@ -128,7 +120,9 @@ Polymer 1.x form for bug reporting in SPA&#39;s
         <iron-icon icon="error"></iron-icon>
         An error occured. Please try again.
       </div>
-      <div class="actions">
+
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
         <paper-button
           raised
           id="submitBtn"
@@ -139,7 +133,7 @@ Polymer 1.x form for bug reporting in SPA&#39;s
           Submit Bug Report
         </paper-button>
       </div>
-    </div>
+    </paper-dialog>
   </template>
 
   <script>
@@ -187,6 +181,10 @@ Polymer 1.x form for bug reporting in SPA&#39;s
         this._setupExceptionCatcher()
       },
 
+      toggle: function() {
+        return this.$.modal.toggle()
+      },
+
       submit: function() {
         if (this._anyRequiredFieldInvalid()) return
 
@@ -211,6 +209,12 @@ Polymer 1.x form for bug reporting in SPA&#39;s
         return Polymer.dom(this.root)
           .querySelectorAll('[required]')
           .some(elem => !elem.validate())
+      },
+
+      _repositionDialog: function() {
+        this.async(() => {
+          this.$.modal.notifyResize()
+        }, 10)
       },
 
       _getCurrentDatetime: function() {

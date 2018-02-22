@@ -19,6 +19,8 @@
     <div class="vertical-section-container centered">
       <h3>Basic bug-reporter demo</h3>
       <demo-snippet>
+        <button id="toggle">Toggle Bug Reporter</button>
+
         <template>
           <bug-reporter
             url="my-api.com/bug-report">
@@ -26,5 +28,13 @@
         </template>
       </demo-snippet>
     </div>
+
+    <script>
+      window.onload = () => {
+        document.querySelector('#toggle').addEventListener('click', () => {
+          document.querySelector('bug-reporter').toggle()
+        })
+      }
+    </script>
   </body>
 </html>
