@@ -14,17 +14,132 @@
   <body>
     <test-fixture id="basic">
       <template>
-        <bug-reporter></bug-reporter>
+        <bug-reporter url="http://fake-api.com/bug"></bug-reporter>
       </template>
     </test-fixture>
 
     <script>
+      // Follows guide from: https://www.polymer-project.org/1.0/docs/tools/tests
+
+      /*
+       * Fake server
+       */
+      let server
+      let element
+      let DOMelements
+
+      setup(() => {
+        server = sinon.fakeServer.create()
+        server.autoRespond = true
+        server.respondWith(
+          "POST",
+          /\/uploads-and-returns-asset-url.*/, [
+            200,
+            "'Content-Type': 'application/json'",
+            '"http://fake-api.com/bug"'
+          ]
+        )
+      })
+
+      teardown(() => { server.restore() })
+
+      setup(() => {
+        element = fixture('basic')
+        domElements = {
+          nameInput:  Polymer.dom(element.root).querySelector('[label="Name"]'),
+          emailInput:  Polymer.dom(element.root).querySelector('[label="Email"]'),
+          descriptionInput:  Polymer.dom(element.root).querySelector('[label="Description of issue"]'),
+
+          submitBtn: Polymer.dom(element.root).querySelector('#submitBtn'),
+          required: Polymer.dom(element.root).querySelectorAll('[required]'),
+          errorLbl: Polymer.dom(element.root).querySelector('.error-container')
+        }
+      })
+
       suite('bug-reporter', function() {
         test('instantiating the element works', function() {
-          var element = fixture('basic');
-          assert.equal(element.is, 'bug-reporter');
-        });
-      });
+          assert.equal(element.is, 'bug-reporter')
+        })
+
+        test('Pushes any app exceptions into the stack traces', () => {
+          // @NOTE We can't really simulate a real error, otherwise
+          // the test-suite will fail, therefore we just call the
+          // `window.onerror` handler ourselves
+          window.onerror('foo', 'foo.js', 20, 10, { stack: 'foo-exception' })
+
+          expect(element.data.stackTraces).to.have.length(1)
+          expect(element.data.stackTraces[0]).to.equal('foo-exception')
+        })
+
+        test('Starts with no field highlighted as invalid', () => {
+          expect(domElements.required.some(elem => elem.invalid)).to.be.false
+        })
+
+        test('Starts with error label hidden', () => {
+          expect(getComputedStyle(domElements.errorLbl).visibility)
+            .to.equal('hidden')
+        })
+
+        test('Highlights any invalid elements on submit', () => {
+          domElements.submitBtn.click()
+          expect(domElements.required.some(elem => elem.invalid)).to.be.true
+        })
+
+        test('Filling in all required fields allows submit', done => {
+          domElements.nameInput.set('value', 'John Doe')
+          domElements.emailInput.set('value', 'john@doe.com')
+          domElements.descriptionInput.set('value', 'Lorem Ipsum \n dolor sit')
+
+          setTimeout(() => {
+            domElements.submitBtn.click()
+            expect(server.requests).have.length(1)
+            done()
+          }, 10)
+        })
+
+        test('Submitting sends all relevant fields', done => {
+          domElements.nameInput.set('value', 'John Doe')
+          domElements.emailInput.set('value', 'john@doe.com')
+          domElements.descriptionInput.set('value', 'Lorem Ipsum \n dolor sit')
+          window.onerror('foo', 'foo.js', 20, 10, { stack: 'foo-exception' })
+
+          setTimeout(() => {
+            domElements.submitBtn.click()
+
+            expect(server.requests).have.length(1)
+            const requestBody = JSON.parse(server.requests[0].requestBody)
+
+            expect(requestBody).to.have.property('name')
+            expect(requestBody.name).to.equal('John Doe')
+
+            expect(requestBody).to.have.property('email')
+            expect(requestBody.email).to.equal('john@doe.com')
+
+            expect(requestBody).to.have.property('name')
+            expect(requestBody.description).to.equal('Lorem Ipsum \n dolor sit')
+
+            expect(requestBody).to.have.property('stackTraces')
+            expect(requestBody.stackTraces).to.be.an('Array')
+            expect(requestBody.stackTraces).to.have.length(1)
+            expect(requestBody.stackTraces[0]).to.equal('foo-exception')
+
+            expect(requestBody).to.have.property('datetime')
+            expect(requestBody.datetime).to.be.a('String')
+            expect(!isNaN(Date.parse(requestBody.datetime))).to.be.ok
+
+            expect(requestBody).to.have.property('system')
+            expect(requestBody.system).to.be.an('Object')
+
+            expect(requestBody.system).to.have.property('browser')
+            expect(requestBody.system.browser).to.be.an('Object')
+
+            expect(requestBody.system).to.have.property('os')
+            expect(requestBody.system.os).to.be.an('Object')
+
+            done()
+          }, 10)
+        })
+      })
     </script>
   </body>
 </html>

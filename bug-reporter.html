@@ -1,5 +1,14 @@
 <link rel="import" href="../polymer/polymer.html">
 
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
+<link rel="import" href="../paper-button/paper-button.html">
+
+<script src="lib/ua-parser.min.js"></script>
+
 <!--
 `bug-reporter`
 Polymer 1.x form for bug reporting in SPA&#39;s
@@ -12,9 +21,125 @@ Polymer 1.x form for bug reporting in SPA&#39;s
     <style>
       :host {
         display: block;
+        font-size: 14px;
+        font-family: sans-serif;
+      }
+
+      .content {
+        padding: 1em;
+        padding-top: 0;
+      }
+
+      h2 {
+        background: #009688;
+        color: #FFF;
+        padding: 0.7em 0.4em;
+        margin-top: 0;
+        font-weight: lighter;
+      }
+
+      paper-input {
+        margin: 0.5em 0;
+      }
+
+      paper-textarea {
+        margin-top: 1.25em;
+      }
+
+      .help-info,
+      .error-container {
+        font-size: 12px;
+      }
+
+      .help-info {
+        color: #999;
+        padding: 1em;
+      }
+
+      .error-container {
+        height: 20px;
+        color: #D50000;
+        visibility: hidden;
+      }
+
+      .error-container[visible] {
+        visibility: visible;
+      }
+
+      .actions {
+        padding: 1em 0;
+        text-align: right;
+      }
+
+      paper-button {
+        text-transform: none;
+        color: #009688;
       }
     </style>
-    <h2>Hello [[prop1]]!</h2>
+    <iron-ajax
+      id="ajaxPost"
+      url="[[url]]"
+      method="POST"
+      content-type="application/json"
+      on-response="handleSuccess"
+      loading="{{loading}}"
+      last-error="{{lastError}}"
+      debounce-duration="300">
+    </iron-ajax>
+
+    <h2> Report a bug </h2>
+
+    <div class="content">
+      <paper-input
+        label="Name"
+        value="{{data.name}}"
+        disabled="[[loading]]"
+        error-message="Required"
+        auto-validate
+        required>
+      </paper-input>
+
+      <paper-input
+        label="Email"
+        type="email"
+        value="{{data.email}}"
+        disabled="[[loading]]"
+        error-message="Required"
+        auto-validate
+        required>
+      </paper-input>
+
+      <paper-textarea
+        label="Description of issue"
+        value="{{data.description}}"
+        disabled="[[loading]]"
+        error-message="Required"
+        auto-validate
+        required>
+      </paper-textarea>
+
+      <p class="help-info">
+        Be as descriptive as possible.
+        <br>
+        Browser/Operating System information are captured automatically.
+      </p>
+
+      <div class="error-container" visible$="[[lastError]]">
+        <iron-icon icon="error"></iron-icon>
+        An error occured. Please try again.
+      </div>
+      <div class="actions">
+        <paper-button
+          raised
+          id="submitBtn"
+          class="primary"
+          on-tap="submit"
+          disabled="[[loading]]">
+          <iron-icon icon="bug-report"></iron-icon>
+          Submit Bug Report
+        </paper-button>
+      </div>
+    </div>
   </template>
 
   <script>
@@ -23,11 +148,76 @@ Polymer 1.x form for bug reporting in SPA&#39;s
       is: 'bug-reporter',
 
       properties: {
-        prop1: {
-          type: String,
-          value: 'bug-reporter',
+        data: {
+          type: Object,
+          value: function() {
+            const parser = new UAParser()
+
+            return {
+              name: '',
+              email: '',
+              description: '',
+              datetime: '',
+              stackTraces: [],
+              system: parser.getResult(),
+              url: window.location.href
+            }
+          }
         },
+
+        url: {
+          type: String,
+          value: 'https://google.com'
+        },
+
+        loading: {
+          type: Boolean,
+          value: false
+        },
+
+        lastError: {
+          type: Boolean,
+          value: false
+        }
       },
+
+      attached: function() {
+        window.bugReporter = this
+
+        this._setupExceptionCatcher()
+      },
+
+      submit: function() {
+        if (this._anyRequiredFieldInvalid()) return
+
+        this.$.ajaxPost.body = JSON.stringify(Object.assign(this.data, {
+          datetime: this._getCurrentDatetime()
+        }))
+
+        this.$.ajaxPost.generateRequest()
+      },
+
+      _setupExceptionCatcher: function() {
+        window.onerror = (message, file, line, column, errorObj) => {
+          // @NOTE handle older-browsers that lack an `errorObj`.
+          if (errorObj)
+            this.data.stackTraces.push(
+              errorObj.stack ? errorObj.stack.toString() : errorObj
+            )
+        }
+      },
+
+      _anyRequiredFieldInvalid: function() {
+        return Polymer.dom(this.root)
+          .querySelectorAll('[required]')
+          .some(elem => !elem.validate())
+      },
+
+      _getCurrentDatetime: function() {
+        const date = new Date()
+
+        return date.toString()
+      }
 
     });
   </script>
