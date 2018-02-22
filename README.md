@@ -7,13 +7,13 @@ Polymer 1.x form for bug reporting in SPA&#39;s
 Captures:
 
 - Name of user, email of user and a user provided description of the issue.
-- Any stack traces of exceptions captured by `window.onerror`.
+- Any stack traces of errors captured by `window.onerror`.
   - These are the same stack traces you would see in the browser console when
     an error is thrown.
-- The current date
+- The current date.
 - Some basic system info:
- - Browser vendor and version
- - OS vendor and version
+  - Browser vendor and version.
+  - OS vendor and version.
 
 ## Installation
 
