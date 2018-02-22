@@ -1,5 +1,6 @@
 {
   "name": "bug-reporter",
+  "version": "0.1.0",
   "description": "Polymer 1.x form for bug reporting in SPA&#39;s",
   "main": "bug-reporter.html",
   "dependencies": {
