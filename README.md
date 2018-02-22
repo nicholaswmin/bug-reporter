@@ -24,7 +24,16 @@ $ bower install --save bug-reporter
 ## Basic Usage
 
 ```html
+<button id="report-bug">Report a Bug</button>
 <bug-reporter url="https://my-api.com/bug"></bug-reporter>
+
+<script>
+  window.onload = () => {
+    document.querySelector('report-bug').addEventListener('click', () => {
+      document.querySelector('bug-reporter').toggle()        
+    })
+  }
+</script>
 ```
 
 When the user fills in the required information and clicks "Submit", the form
