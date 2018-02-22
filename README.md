@@ -1,5 +1,7 @@
 # bug-reporter
 
+[![Build Status](https://travis-ci.org/nicholaswmin/bug-reporter.svg?branch=master)](https://travis-ci.org/nicholaswmin/bug-reporter)
+
 Polymer 1.x form for bug reporting in SPA&#39;s
 
 Captures:
